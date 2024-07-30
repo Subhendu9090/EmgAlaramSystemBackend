@@ -34,25 +34,6 @@ const findEmployee = async (EmpId) => {
   }
 };
 
-// update Location
-const updateEmployeeLocation = async (data) => {
-  const EmpId = data?.id;
-  console.log("data", data);
-  if (!isValidObjectId(EmpId)) {
-    return "employee id is not valid"
-  }
-  try {
-    const existedEmployee = await Employee.findById(EmpId)
-    existedEmployee.location = {
-      type: "Point",
-      coordinates: [data?.longitude, data?.latitude]
-    };
-    await existedEmployee.save();
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 const userSockets = {};
 // for multiple user based on tower number
 io.on("connection", (Socket) => {
@@ -103,20 +84,6 @@ io.on("connection", (Socket) => {
 
   Socket.on("offNotification", async (msg) => {
     console.log(msg);
-    for (const empId in location) {
-      console.log("Processing employee:", empId);
-
-      const latestLocation = location[empId][location[empId].length - 1];
-
-      console.log(location[empId][location[empId].length - 1]);
-      console.log("Latest location for employee:", empId, latestLocation);
-
-      if (latestLocation) {
-        await updateEmployeeLocation(latestLocation);
-      } else {
-        console.log("No location data available for employee:", empId);
-      }
-    }
     for (const userId in userSockets) {
       io.to(userSockets[userId]).emit("offMessage", "off the notification")
     }

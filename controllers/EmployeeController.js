@@ -2,25 +2,26 @@ import Tower from "../models/TowerModel.js";
 import { GenerateJwt } from "../utils/helper.js";
 import bcrypt from "bcryptjs";
 import Employee from "../models/EmployeeModel.js";
+import { isValidObjectId } from "mongoose";
 
 export const registerEmployee = async (req, res) => {
   try {
     const { name, email, password, towerNumber, mobileNumber, carNumber } =
       req.body;
     if ([name, email, password, mobileNumber, carNumber].some((field) => field?.trim() === ""
-      )
+    )
     ) {
       return res.status(400).json({
         success: false,
         message: "Enter required field",
       });
     }
-  if (!towerNumber) {
-    return res.status(400).json({
-      success: false,
-      message: "Enter tower number",
-    });
-  }
+    if (!towerNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter tower number",
+      });
+    }
     // Check if the email already exists
     const existedUser = await Employee.findOne({ email });
     if (existedUser) {
@@ -181,3 +182,59 @@ export const AllEmp = async (req, res) => {
     console.log(error);
   }
 };
+
+export const updateLocation = async (req, res) => {
+  try {
+    const { location, EmpId } = req.body;
+  
+    if (!isValidObjectId(EmpId)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "invalid object id",
+      });
+    }
+  
+    if (
+      typeof location !== "object" ||
+      location.type !== "Point" ||
+      !Array.isArray(location.coordinates) ||
+      typeof location.coordinates[0] !== "number" ||
+      typeof location.coordinates[1] !== "number"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please provide a valid location with type 'Point' and coordinates [longitude, latitude]",
+      });
+    }
+  
+    const existedEmployee = await Employee.findById(EmpId);
+  
+    if (!existedEmployee) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Employee not found",
+      });
+    };
+  
+    existedEmployee.location = location;
+    await existedEmployee.save()
+  
+    return res.status(400).json({
+      success: false,
+      message:
+        "Employee location updated successfully",
+      data: existedEmployee
+    });
+  
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message:
+        "network error",
+    });
+  }
+}
