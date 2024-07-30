@@ -3,16 +3,12 @@ import http from "http";
 import express from "express";
 import Employee from "../models/EmployeeModel.js";
 import { isValidObjectId } from "mongoose";
-import Tower from "../models/TowerModel.js";
+import cors from "cors";
 
 const app = express();
+app.use(cors())
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    credentials: true
-  }
-});
+const io = new Server(server);
 // find employee based on employee
 const findEmployee = async (EmpId) => {
   if (!isValidObjectId(EmpId)) {

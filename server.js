@@ -6,14 +6,6 @@ import TowerRouter from "./routes/TowerRoute.js";
 import AdminRouter from "./routes/Admin.route.js";
 import {app,server } from "./Socket/socket.js";
 import DbConnect from "./db/DbConnect.js";
-import cors from "cors";
-
-app.use(cors(
-    {
-        origin:"*",
-        credentials:true
-    }
-))
 
 dotenv.config()
 
