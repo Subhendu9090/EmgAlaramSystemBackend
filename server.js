@@ -8,7 +8,12 @@ import {app,server } from "./Socket/socket.js";
 import DbConnect from "./db/DbConnect.js";
 import cors from "cors";
 
-app.use(cors())
+app.use(cors(
+    {
+        origin:"*",
+        credentials:true
+    }
+))
 
 dotenv.config()
 

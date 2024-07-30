@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
+    credentials: true
   }
 });
 // find employee based on employee
@@ -35,7 +35,7 @@ const findEmployee = async (EmpId) => {
 };
 
 const userSockets = {};
-// for multiple user based on tower number
+
 io.on("connection", (Socket) => {
   console.log("user connected with", Socket.id);
 
