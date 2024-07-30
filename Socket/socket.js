@@ -6,10 +6,15 @@ import { isValidObjectId } from "mongoose";
 import cors from "cors";
 
 const app = express();
-app.use(cors())
+app.use(cors());
+
 const server = http.createServer(app);
-const io = new Server(server);
-// find employee based on employee
+const io = new Server(server, {
+ cors:{
+   origin: ['http://localhost:5173']
+ }
+});
+
 const findEmployee = async (EmpId) => {
   if (!isValidObjectId(EmpId)) {
     console.log(EmpId, " is not a valid ObjectId");
