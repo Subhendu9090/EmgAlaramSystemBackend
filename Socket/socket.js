@@ -67,20 +67,20 @@ io.on("connection", (Socket) => {
   Socket.on("sendLocation", (data) => {
     console.log("sendLocation", data);
 
-    if (!location[data?.id]) {
-      location[data.id] = [];
-    }
-    location[data.id].push(data);
+    // if (!location[data?.id]) {
+    //   location[data.id] = [];
+    // }
+    // location[data.id].push(data);
 
-    if (location[data.id].length > 60) {
-      location[data.id].splice(1, 2);
-    }
+    // if (location[data.id].length > 60) {
+    //   location[data.id].splice(1, 2);
+    // }
 
     if (data) {
-      io.to(userSockets["admin@sos.com"]).emit("getLocation", location)
+      io.to(userSockets["admin@sos.com"]).emit("getLocation", data)
     }
 
-    console.log("Location", location);
+    console.log("Location", data);
   })
 
   Socket.on("offNotification", async (msg) => {
