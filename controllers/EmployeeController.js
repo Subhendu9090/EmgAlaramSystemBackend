@@ -222,7 +222,7 @@ export const updateLocation = async (req, res) => {
     existedEmployee.location = location;
     await existedEmployee.save()
   
-    return res.status(400).json({
+    return res.status(200).json({
       success: false,
       message:
         "Employee location updated successfully",
