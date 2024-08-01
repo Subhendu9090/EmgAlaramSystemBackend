@@ -10,9 +10,9 @@ app.use(cors());
 
 const server = http.createServer(app);
 const io = new Server(server, {
- cors:{
-   origin:"*"
- }
+  cors: {
+    origin: "*"
+  }
 });
 
 const findEmployee = async (EmpId) => {
@@ -49,15 +49,24 @@ io.on("connection", (Socket) => {
     }
   });
 
-  Socket.on("sendUserArray", async (user) => {
-    console.log(user);
+  Socket.on("sendUserArray", async (data) => {
+    const user = data.userIdArray;
+    const number = data.towerNumber
+    const location = data.location;
+    const name = data.towerName;
+    const sendingData = {number,location,name}
+    console.log("data", data);
+
+    // io.to(userSockets["admin@sos.com"]).emit("getNotificationByUserArray", sendingData);
+
     user.map(async (userId) => {
       if (userSockets[userId]) {
-        io.to(userSockets[userId]).emit("getNotificationByUserArray", "notification get by user array")
+        io.to(userSockets[userId]).emit("getNotificationByUserArray", sendingData)
       } else {
-        // console.log("not present");
-        const EmpName = await findEmployee(userId)
-        io.to(userSockets["admin@sos.com"]).emit("getNotificationToAdminId", `${EmpName} is not available`)
+        console.log(userSockets["admin@sos.com"]);
+          const empName = await findEmployee(userId);
+          io.to(userSockets["admin@sos.com"]).emit("getNotificationToAdminId", `${empName} is not available`);
+          
       }
     })
 
