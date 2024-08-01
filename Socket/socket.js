@@ -88,7 +88,6 @@ io.on("connection", (Socket) => {
     if (data) {
       io.to(userSockets["admin@sos.com"]).emit("getLocation", data)
     }
-
     console.log("Location", data);
   })
 
