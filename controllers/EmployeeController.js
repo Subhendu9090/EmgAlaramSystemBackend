@@ -8,7 +8,7 @@ export const registerEmployee = async (req, res) => {
   try {
     const { name, email, password, towerNumber, mobileNumber, carNumber } =
       req.body;
-    if ([name, email, password, mobileNumber, carNumber].some((field) => field?.trim() === ""
+    if ([name, email, password, carNumber].some((field) => field?.trim() === ""
     )
     ) {
       return res.status(400).json({
@@ -16,30 +16,22 @@ export const registerEmployee = async (req, res) => {
         message: "Enter required field",
       });
     }
-    if (!towerNumber) {
+    if (!towerNumber || !mobileNumber) {
       return res.status(400).json({
         success: false,
-        message: "Enter tower number",
+        message: "Enter tower number and mobile number",
       });
     }
-    // Check if the email already exists
-    const existedUser = await Employee.findOne({ email });
+
+    const existedUser = await Employee.findOne({
+      $or: [{ email }, { mobileNumber }]
+    });
     if (existedUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists with this email",
+        message: "User already exists with this email or mobile number",
       });
     }
-
-    // Check if the mobile number already exists
-    const existMobilenumber = await Employee.findOne({ mobileNumber });
-    if (existMobilenumber) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists with this mobile number",
-      });
-    }
-
     // Find the tower with the given tower number
     const tower = await Tower.findOne({ towerNumber });
     if (!tower) {
@@ -51,7 +43,7 @@ export const registerEmployee = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newEmployee = new Employee({
+    const newEmployee = await Employee.create({
       name,
       email,
       password: hashedPassword,
@@ -60,20 +52,15 @@ export const registerEmployee = async (req, res) => {
       carNumber,
     });
 
-    await newEmployee.save();
+    tower.assignedEmployees=  newEmployee._id;
+    await tower.save()
 
-    // Add the employee to the tower's assignedEmployees array
-    tower.assignedEmployees.push(newEmployee._id);
-    await tower.save();
-
-    // Create a new object without the password field
-    const employeeWithoutPassword = newEmployee.toObject();
-    delete employeeWithoutPassword.password;
+    const employee = await Employee.findById(newEmployee._id).select("-password")
 
     return res.status(200).json({
       success: true,
-      data: employeeWithoutPassword,
-      message: "Employee created successfully and assigned to tower",
+      data: employee,
+      message: "Employee created successfully",
     });
   } catch (error) {
     console.error(error);
@@ -87,52 +74,57 @@ export const registerEmployee = async (req, res) => {
 
 export const loginEmployee = async (req, res) => {
   try {
-    const { email, password, location } = req.body;
-    if ([email, password].some((field) => field?.trim() === "")) {
+    const { email, password, empLocation } = req.body;
+
+    if ([email, password].some((field) => typeof field === 'string' && field.trim() === "")) {
       return res.status(400).json({
         success: false,
-        message: "Please provide valid email and password",
+        message: "Please provide a valid email and password",
       });
     }
-    const check = await Employee.findOne({ email });
-    if (!check) {
+
+    if (empLocation.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid location with [latitude,longitude]",
+      });
+    }
+
+    const existEmployee = await Employee.findOne({ email });
+    if (!existEmployee) {
       return res.status(400).json({
         success: false,
         message: "User not found with this email",
       });
     }
-    const checkPassword = await bcrypt.compare(password, check.password);
-    if (!checkPassword) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Password does not match" });
-    }
-    if (
-      typeof location !== "object" ||
-      location.type !== "Point" ||
-      !Array.isArray(location.coordinates) ||
-      typeof location.coordinates[0] !== "number" ||
-      typeof location.coordinates[1] !== "number"
-    ) {
+
+    const isCorrectPassword = await bcrypt.compare(password, existEmployee.password);
+    if (!isCorrectPassword) {
       return res.status(400).json({
         success: false,
-        message:
-          "Please provide a valid location with type 'Point' and coordinates [longitude, latitude]",
+        message: "Incorrect password",
       });
     }
-    check.location = location;
-    await check.save();
-    const token = GenerateJwt(check.id);
+
+    existEmployee.empLocation = empLocation;
+    await existEmployee.save()
+
+    // Generate JWT token
+    const token = await GenerateJwt(existEmployee._id);
+
     return res.status(200).json({
       success: true,
-      message: "Employee login successfully",
+      message: "Employee logged in successfully",
       token: token,
-      data: check,
+      data: existEmployee,
     });
+
   } catch (error) {
+    console.error("Error in loginEmployee:", error);
     return res.status(500).json({
       success: false,
-      message: "Employee login failed"
+      message: "Employee login failed",
+      error: error.message,
     });
   }
 };
@@ -185,8 +177,8 @@ export const AllEmp = async (req, res) => {
 
 export const updateLocation = async (req, res) => {
   try {
-    const { location, EmpId } = req.body;
-  
+    const { empLocation, EmpId } = req.body;
+
     if (!isValidObjectId(EmpId)) {
       return res.status(400).json({
         success: false,
@@ -194,23 +186,16 @@ export const updateLocation = async (req, res) => {
           "invalid object id",
       });
     }
-  
-    if (
-      typeof location !== "object" ||
-      location.type !== "Point" ||
-      !Array.isArray(location.coordinates) ||
-      typeof location.coordinates[0] !== "number" ||
-      typeof location.coordinates[1] !== "number"
-    ) {
+
+    if (empLocation?.length !== 2) {
       return res.status(400).json({
         success: false,
-        message:
-          "Please provide a valid location with type 'Point' and coordinates [longitude, latitude]",
+        message:"Please provide a valid location with [ latitude , longitude]",
       });
     }
-  
+
     const existedEmployee = await Employee.findById(EmpId);
-  
+
     if (!existedEmployee) {
       return res.status(400).json({
         success: false,
@@ -218,17 +203,17 @@ export const updateLocation = async (req, res) => {
           "Employee not found",
       });
     };
-  
-    existedEmployee.location = location;
+
+    existedEmployee.empLocation = empLocation;
     await existedEmployee.save()
-  
+
     return res.status(200).json({
       success: true,
       message:
         "Employee location updated successfully",
       data: existedEmployee
     });
-  
+
   } catch (error) {
     console.error(error);
     return res.status(500).json({

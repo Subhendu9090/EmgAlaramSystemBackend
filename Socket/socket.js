@@ -72,6 +72,11 @@ io.on("connection", (Socket) => {
 
   })
 
+  Socket.on("accept",(name)=>{
+    console.log("message",name);
+    io.to(userSockets["admin@sos.com"]).emit("messageAccept",name)
+  })
+
   const location = {}
   Socket.on("sendLocation", (data) => {
     console.log("sendLocation", data);

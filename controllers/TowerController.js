@@ -4,36 +4,26 @@ import { calculateDistance } from "../utils/helper.js";
 
 export const registerTower = async (req, res) => {
   try {
-    const { towerName, towerNumber, location } = req.body;
+    let { towerName, towerNumber, towerLocation } = req.body;
 
-    if (!towerNumber || !location || !towerName) {
+    if ([towerName].some((field) => typeof field === 'string' && field.trim() === "")) {
       return res.status(400).json({
         success: false,
-        message: "Please provide tower number and location and name",
+        message: "Please provide tower name",
       });
     }
-
-    if (typeof towerNumber !== "number") {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide a valid tower number",
-      });
-    }
-
-    if (
-      typeof location !== "object" ||
-      location.type !== "Point" ||
-      !Array.isArray(location.coordinates) ||
-      location.coordinates.length !== 2 ||
-      typeof location.coordinates[0] !== "number" ||
-      typeof location.coordinates[1] !== "number"
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Please provide a valid location with type 'Point' and coordinates [longitude, latitude]",
-      });
-    }
+   if (!towerNumber) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide tower number",
+    });
+   }
+   if (towerLocation.length !== 2) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid location with [longitude, latitude]",
+    });
+   }
 
     const existingTower = await Tower.findOne({ towerNumber });
     if (existingTower) {
@@ -43,7 +33,7 @@ export const registerTower = async (req, res) => {
       });
     }
 
-    const newTower = await Tower.create({ towerName, towerNumber, location });
+    const newTower = await Tower.create({ ...req.body });
 
     return res.status(201).json({
       success: true,
@@ -55,6 +45,7 @@ export const registerTower = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "An error occurred while registering the tower",
+      error: error.message, // Optional for debugging
     });
   }
 };
@@ -62,7 +53,7 @@ export const registerTower = async (req, res) => {
 export const getAllTower = async (req, res) => {
   try {
     const allData = await Tower.find({});
-    if (allData.length < 0) {
+    if (allData.length === 0) {
       res.json({
         message: "Tower is empty",
       });
@@ -113,35 +104,35 @@ export const GetEmployeesByTowerId = async (req, res) => {
 export const getSingleTowerByNumberAndNearestEmployee = async (req, res) => {
   const { number } = req.body;
   if (!number) {
-    res.status(200).json({ success: false, message: "Please provide a id" });
+    res.status(400).json({ success: false, message: "Please provide a tower number" });
   }
   try {
     const towerByNumber = await Tower.findOne({ towerNumber: number });
     if (!towerByNumber) {
-      res.status(200).json({
+      res.status(404).json({
         success: false,
         message: "Tower with this number is not exist",
       });
     }
 
-    const { towerName, towerNumber, location } = towerByNumber;
+    const { towerName, towerNumber, towerLocation } = towerByNumber;
     const TowerDetails = {
       towerName,
       towerNumber,
-      coordinates: location.coordinates,
+      towerLocation,
     };
 
     const allEmployee = await AllEmp();
 
     const employeeCoordinates = allEmployee
-      .filter((item) => item.location && item.location.coordinates)
+      .filter((item) => item.empLocation)
       .map((item) => ({
         name: item.name,
         id: item._id,
-        coordinates: item.location.coordinates,
+        coordinates: item.empLocation,
         distance: calculateDistance(
-          TowerDetails.coordinates,
-          item.location.coordinates
+          TowerDetails.towerLocation,
+          item.empLocation
         ),
       }))
       .sort((a, b) => a.distance - b.distance) // Sort by distance
