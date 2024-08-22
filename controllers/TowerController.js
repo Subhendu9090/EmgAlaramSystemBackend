@@ -156,3 +156,33 @@ export const getSingleTowerByNumberAndNearestEmployee = async (req, res) => {
     });
   }
 };
+
+export const updateAcceptedEmployee = async(req,res)=>{
+ try {
+   const { towerId , status , acceptedEmployees} = req.body;
+   const existedTower = await Tower.findById(towerId);
+ 
+   if (!existedTower) {
+     return res.status(404).json({
+       success: false,
+       message: "Tower not found",
+     });
+   }
+
+   existedTower.status = status;
+   existedTower.acceptedEmployees=acceptedEmployees;
+   await existedTower.save()
+   return res.status(200).json({
+    success:true,
+    message:"Status Updated Successfully",
+    data:existedTower
+   })
+ } catch (error) {
+  console.log("Error",error);
+  res.status(200).json({
+    sucess: false,
+    message: "Something went wrong",
+  });
+ }
+
+}

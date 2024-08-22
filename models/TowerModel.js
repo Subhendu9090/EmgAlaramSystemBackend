@@ -14,14 +14,14 @@ const TowerSchema = new mongoose.Schema({
     type:[String]
   },
   status: {
-    type: Boolean,
+    type: String,
+    enum: ['pending', 'accept', 'reached'],
   },
   lastInspectionDate: {
     type: Date,
   },
-  alertCount: {
-    type: Number,
-    default: 0,
+  acceptedEmployees: {
+    type: [String]
   },
   assignedEmployees: [
     {
