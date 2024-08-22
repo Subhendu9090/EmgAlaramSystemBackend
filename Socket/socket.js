@@ -55,13 +55,13 @@ io.on("connection", (Socket) => {
     const location = data.location;
     const name = data.towerName;
     const sendingData = {number,location,name}
-    console.log("data", data);
+    console.log("data", data.towerId);
 
     // io.to(userSockets["admin@sos.com"]).emit("getNotificationByUserArray", sendingData);
 
     user.map(async (userId) => {
       if (userSockets[userId]) {
-        io.to(userSockets[userId]).emit("getNotificationByUserArray", sendingData)
+        io.to(userSockets[userId]).emit("getNotificationByUserArray", data)
       } else {
         console.log(userSockets["admin@sos.com"]);
           const empName = await findEmployee(userId);
