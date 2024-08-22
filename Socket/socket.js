@@ -65,7 +65,7 @@ io.on("connection", (Socket) => {
       } else {
         console.log(userSockets["admin@sos.com"]);
           const empName = await findEmployee(userId);
-          io.to(userSockets["admin@sos.com"]).emit("getNotificationToAdminId", `${empName} is not available`);
+          io.to(userSockets["admin@sos.com"]).emit("getNotificationToAdminId", empName);
           
       }
     })
