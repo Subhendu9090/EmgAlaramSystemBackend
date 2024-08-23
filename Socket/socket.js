@@ -72,23 +72,23 @@ io.on("connection", (Socket) => {
 
   })
 
+  Socket.on("pending",(name)=>{
+    console.log("message",name);
+    io.to(userSockets["admin@sos.com"]).emit("pendingMessage",name)
+  })
+
   Socket.on("accept",(name)=>{
     console.log("message",name);
     io.to(userSockets["admin@sos.com"]).emit("messageAccept",name)
   })
+  
+  Socket.on("reached",(name)=>{
+    console.log("message",name);
+    io.to(userSockets["admin@sos.com"]).emit("messageReached",name)
+  })
 
-  const location = {}
   Socket.on("sendLocation", (data) => {
     console.log("sendLocation", data);
-
-    // if (!location[data?.id]) {
-    //   location[data.id] = [];
-    // }
-    // location[data.id].push(data);
-
-    // if (location[data.id].length > 60) {
-    //   location[data.id].splice(1, 2);
-    // }
 
     if (data) {
       io.to(userSockets["admin@sos.com"]).emit("getLocation", data)
