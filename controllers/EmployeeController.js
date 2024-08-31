@@ -52,7 +52,7 @@ export const registerEmployee = async (req, res) => {
       carNumber,
     });
 
-    tower.assignedEmployees=  newEmployee._id;
+    tower.assignedEmployees = newEmployee._id;
     await tower.save()
 
     const employee = await Employee.findById(newEmployee._id).select("-password")
@@ -190,7 +190,7 @@ export const updateLocation = async (req, res) => {
     if (empLocation?.length !== 2) {
       return res.status(400).json({
         success: false,
-        message:"Please provide a valid location with [ latitude , longitude]",
+        message: "Please provide a valid location with [ latitude , longitude]",
       });
     }
 
@@ -220,6 +220,44 @@ export const updateLocation = async (req, res) => {
       success: false,
       message:
         "network error",
+    });
+  }
+}
+
+export const deleteEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "invalid object id",
+      });
+    }
+
+    const deletedEmployee = await Employee.findByIdAndDelete(id);
+
+    if (!deletedEmployee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data:deletedEmployee,
+      message:
+        "Employee Deleted successfully",
+    });
+  } catch (error) {
+    console.log("Error in delete Employee",error);
+    
+    return res.status(500).json({
+      success: false,
+      message:
+        "Employee deletion failed",
     });
   }
 }

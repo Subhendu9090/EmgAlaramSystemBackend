@@ -1,6 +1,7 @@
 import Tower from "../models/TowerModel.js";
 import { AllEmp } from "./EmployeeController.js";
 import { calculateDistance } from "../utils/helper.js";
+import { isValidObjectId } from "mongoose";
 
 export const registerTower = async (req, res) => {
   try {
@@ -12,18 +13,18 @@ export const registerTower = async (req, res) => {
         message: "Please provide tower name",
       });
     }
-   if (!towerNumber) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide tower number",
-    });
-   }
-   if (towerLocation.length !== 2) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a valid location with [longitude, latitude]",
-    });
-   }
+    if (!towerNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide tower number",
+      });
+    }
+    if (towerLocation.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid location with [longitude, latitude]",
+      });
+    }
 
     const existingTower = await Tower.findOne({ towerNumber });
     if (existingTower) {
@@ -157,32 +158,69 @@ export const getSingleTowerByNumberAndNearestEmployee = async (req, res) => {
   }
 };
 
-export const updateAcceptedEmployee = async(req,res)=>{
- try {
-   const { towerId , status , acceptedEmployees} = req.body;
-   const existedTower = await Tower.findById(towerId);
- 
-   if (!existedTower) {
-     return res.status(404).json({
-       success: false,
-       message: "Tower not found",
-     });
-   }
+export const updateAcceptedEmployee = async (req, res) => {
+  try {
+    const { towerId, status, acceptedEmployees } = req.body;
+    const existedTower = await Tower.findById(towerId);
 
-   existedTower.status = status;
-   existedTower.acceptedEmployees=acceptedEmployees;
-   await existedTower.save()
-   return res.status(200).json({
-    success:true,
-    message:"Status Updated Successfully",
-    data:existedTower
-   })
- } catch (error) {
-  console.log("Error",error);
-  res.status(200).json({
-    sucess: false,
-    message: "Something went wrong",
-  });
- }
+    if (!existedTower) {
+      return res.status(404).json({
+        success: false,
+        message: "Tower not found",
+      });
+    }
 
+    existedTower.status = status;
+    existedTower.acceptedEmployees = acceptedEmployees;
+    await existedTower.save()
+    return res.status(200).json({
+      success: true,
+      message: "Status Updated Successfully",
+      data: existedTower
+    })
+  } catch (error) {
+    console.log("Error", error);
+    res.status(200).json({
+      sucess: false,
+      message: "Something went wrong",
+    });
+  }
+
+}
+
+export const deleteTower = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "invalid object id",
+      });
+    }
+
+    const deletedTower = await Tower.findByIdAndDelete(id);
+
+    if (!deletedTower) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Tower not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: deletedTower,
+      message: "Tower deleted successfully",
+    });
+  } catch (error) {
+    console.log("Error in delete Tower", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Tower deletion failed",
+    });
+  }
 }
